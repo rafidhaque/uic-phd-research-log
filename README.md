@@ -9,13 +9,13 @@
 
 ---
 
-## 🚀 Current Focus (Sprint 1)
+## Current Focus (Sprint 1)
 - **Reinforcement Learning:** Implementing RL agents using stable-baselines3 to understand reward mechanisms in security environments.
 - **Literature Review:** Analyzing papers from USENIX/CCS etc. to understand security in DevOps.
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ### 1. [Research Projects](./01-Research-Projects)
 Active development and PoC implementations.
