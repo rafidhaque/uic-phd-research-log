@@ -10,9 +10,8 @@
 ---
 
 ## 🚀 Current Focus (Sprint 1)
-- **Reinforcement Learning:** Implementing PPO/DQN agents using stable-baselines3 to understand reward mechanisms in security environments.
-- **DevSecOps Security:** Exploring the integration of RL agents into CI/CD pipelines for automated vulnerability patching.
-- **Literature Review:** Analyzing papers from USENIX/CCS regarding RL in System Security.
+- **Reinforcement Learning:** Implementing RL agents using stable-baselines3 to understand reward mechanisms in security environments.
+- **Literature Review:** Analyzing papers from USENIX/CCS etc. to understand security in DevOps.
 
 ---
 
@@ -38,5 +37,6 @@ Notes from CLEETS cross-cut meetings and lab sync-ups.
 ## 📅 Milestones & Timeline
 | Date | Milestone | Status |
 |------|-----------|--------|
-| Jan 2026 | Literature Review (Lab History) | ✅ Completed |
-| Feb 2026 | RL Environment Setup for DevOps | 🚧 In Progress |
+| Jan 2026 | Literature Review (Lab History) | Completed |
+| Feb 2026 | RL Environment Setup | In Progress |
+| Feb 2026 | Survey Security aspect of DevOps | In Progress |
