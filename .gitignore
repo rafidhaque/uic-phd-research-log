@@ -1,0 +1,39 @@
+# --- Python এর আবর্জনা (System Files) ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual Environment (সবচেয়ে ইম্পর্টেন্ট মামা!) ---
+# তোর এনভায়রনমেন্ট ফোল্ডার গিটহাবে গেলে রিপোজিটরি স্লো হয়ে যাবে
+rl_env/
+venv/
+env/
+.env
+
+# --- RL Models & Checkpoints (ভারী ফাইল) ---
+# ট্রেনিং করা মডেল (zip ফাইল) সাধারণত ১০০ মেগাবাইটের বেশি হতে পারে
+# এগুলা গিটহাবে পুশ করবি না, এগুলা আলাদা রাখাই ভালো
+*.zip
+*.pkl
+*.pth
+*.h5
+logs/
+tensorboard_logs/
+checkpoints/
+
+# --- IDE Settings (VS Code / PyCharm) ---
+# তোর পিসির সেটিংস অন্যর দরকার নাই
+.vscode/
+.idea/
+
+# --- Windows এর ফালতু ফাইল ---
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Jupyter Notebook Checkpoints ---
+.ipynb_checkpoints/
+
+# --- Data (যদি কোনো ডেটাসেট থাকে) ---
+data/
+datasets/
