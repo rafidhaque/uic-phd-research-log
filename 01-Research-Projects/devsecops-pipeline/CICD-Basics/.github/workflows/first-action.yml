@@ -1,0 +1,30 @@
+name: my first github action
+
+# কখন চলবে এই একশন?
+on:
+  push:
+    branches: [ "DevOps-Basics" ]
+  pull_request:
+    branches: [ "DevOps-Basics" ]
+
+# জবঃ কী কী কাজ করবে?
+jobs:
+  build-and-test:
+    # রানার বলে এইটাকে! মানে কোন মেশিনে চলবে। এইটা আমার নিজের মেশিন না, গিটহাব দিবে ফ্রী!
+    runs-on: ubuntu-latest
+
+  steps:
+  - name: Checkout code
+    uses: actions/checkout@v3
+
+  - name: Setup Node.js
+    uses: actions/setup-node@v3
+    with:
+      node-version: '18'
+
+  - name: Installing Dependencies
+    run: npm install
+
+  - name: Run Tests
+    run: npm test
+
