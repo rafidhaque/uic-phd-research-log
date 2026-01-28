@@ -1,0 +1,1 @@
+console.log("Hello mama! Github actions is running!");
