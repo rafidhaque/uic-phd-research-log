@@ -35,4 +35,7 @@ def scan_action(repo_url):
     package_json_path = os.path.join(repo_path, "package.json")
 
     if not os.path.exists(package_json_path):
-        
+        print("No JSON package here!")
+        return
+    else:
+        print("Found it!")
