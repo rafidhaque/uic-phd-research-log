@@ -39,3 +39,5 @@ def scan_action(repo_url):
         return
     else:
         print("Found it!")
+
+    stdout, stderr = run_command("npm install --package-lock-only --ignore-scripts", cwd=repo_name)

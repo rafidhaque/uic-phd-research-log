@@ -37,6 +37,12 @@ Notes from CLEETS cross-cut meetings and lab sync-ups.
 ## 📅 Milestones & Timeline
 | Date | Milestone | Status |
 |------|-----------|--------|
-| Jan 2026 | Literature Review (Lab History) | Completed |
-| Feb 2026 | RL Environment Setup | In Progress |
-| Feb 2026 | Survey Security aspect of DevOps | In Progress |
+| 15 Jan 2026 | Literature Review (Lab History) | Completed |
+| 29 Jan 2026 | RL Environment Setup | Completed |
+| 1 Feb 2026 | Survey Security aspect of DevOps | Completed |
+| 9 Feb 2026 | Implement the eaudit paper on Linux VM | In Progress |
+| 9 Feb 2026 | Find open problems mentioned in ARGUS and come up with potential solution | In Progress |
+| 9 Feb 2026 | Find out if there is any works regarding creating a flow representation of GitHub repository | In Progress |
+| 9 Feb 2026 | Find out what is the namespace of GitHub Actions | In Progress |
+
+
