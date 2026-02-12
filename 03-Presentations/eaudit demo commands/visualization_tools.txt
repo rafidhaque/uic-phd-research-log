@@ -1,0 +1,20 @@
+Gource
+	just open the folder in cmd and type "gource"
+
+CodeVisualizer
+	Extension
+
+Git-Truck
+	npx git-truck@latest
+
+git log --graph
+	git log --graph --oneline --decorate --all
+
+Githru
+	VS Code Extension
+
+gitdiagram
+	just change the url
+
+codecharta
+	npx codecharta-visualization

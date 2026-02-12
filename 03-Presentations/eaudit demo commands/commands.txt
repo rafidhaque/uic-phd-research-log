@@ -1,0 +1,85 @@
+cd eaudit
+sudo ./ecapd -c demo.dat
+
+
+
+mkdir demo_folder       
+touch demo_folder/secret.txt
+echo "Hello" > demo_folder/secret.txt
+rm demo_folder/secret.txt
+rmdir demo_folder
+
+
+
+
+mkdir demo_folder
+
+rm -f /demo_folder/non_existant.c
+
+mkdir demo_folder
+
+cd demo_folder/non_folder
+
+mkdir /root/hack_attempt
+
+
+
+
+
+
+sudo ./eaudit -I demo.dat -P /dev/stdout
+
+sudo ./eaudit -I demo.dat -pf
+
+sudo ./eaudit -I demo.dat -P /dev/stdout | grep "ret=-" 
+
+
+From the paper of EAudit:
+	assign weights to system calls (prioritization)
+		so that they can be captured easily
+
+what can the attackers of charging stations and what kind of system calls that they may make
+	think of scenarios of attack (3 entrance points?)
+		use usb drive
+		attack when updating (internet)
+		attacker can pretend to be a car
+			eg. buffer overflow attack
+	what is ttp?*
+	
+
+what are the denominators? done
+
+go thru the paper: https://www.ndss-symposium.org/wp-content/uploads/vehiclesec2024-69-paper.pdf
+	find out the github repo
+		but what to do with it?
+
+speak to micheal about the implementation of VM.
+
+Find out about the parameters that can be given to eaudit?
+
+OCCPPStorm problems solve by HOLMES+EAudit
+	Fuzzing?
+		clientside vs serverside?
+
+Look into EVerest (Low Priority)
+
+take the paper and discuss with micheal about use holmes and eaudit.***
+
+
+------------
+
+
+provenance based reasoning system (using eaudit) to find out whether a file is taking a malicious input (context argus)
+
+
+what is the policy of actions
+
+runtime monitoring for github actions paper? (send papers) (may use eaudit?)
+	find out ideal situations -> learn from them -> see if any deviation
+
+	if none exits
+		find out the ideal baseline security related stuff occurs in no attack environemnt
+
+------------
+
+send zoom meeting link!!
