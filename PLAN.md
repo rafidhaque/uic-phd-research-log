@@ -28,6 +28,9 @@ If he can rephrase it correctly, he understood it. If not, the explanation didn'
 **6. Never write something Rafid will say out loud to the professor.**
 Talking points, meeting responses, quiz answers — Claude can quiz Rafid and give feedback on his answers, but Rafid produces them.
 
+**7. Never include "Co-Authored-By: Claude" in git commit messages.**
+Commits should appear as Rafid's alone. Do not add any Claude co-author trailer to commit messages.
+
 **7. When Rafid asks Claude to "write the email" or "write the document" — ask him to draft it first.**
 Then Claude reviews and gives specific feedback. Exception: purely logistical/administrative emails where content doesn't matter.
 
