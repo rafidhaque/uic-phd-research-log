@@ -1,5 +1,5 @@
 # ProvAction — Research Project Plan
-> Last updated: 2026-04-08 (after Carlo meeting + workflow development)
+> Last updated: 2026-04-10 (added core problem statement + updated attack workflow status)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -38,6 +38,119 @@ Then Claude reviews and gives specific feedback. Exception: purely logistical/ad
 - Professor Venkat will quiz Rafid in meetings. If Rafid doesn't understand it, he'll get caught.
 - The professor specifically said "I can tell when it's AI-generated." He's watching.
 - Rafid's long-term goal is to do research, not to be good at prompting Claude.
+
+---
+
+## THE CORE RESEARCH PROBLEM (The Hard Part)
+
+This section describes the fundamental challenge we are stuck on. It is written for someone (e.g., Claude Opus) who needs full context to help think through a solution.
+
+### Background: What is a Provenance Graph?
+
+A provenance graph is a directed graph built from kernel-level syscall events (captured by eaudit, an eBPF tracer). It has:
+- **Nodes**: subjects (processes) and objects (files, network IPs)
+- **Edges**: syscall events — read, write, execve, connect, open, clone
+
+Example: a process reads a file → there is a directed edge from the file node to the process node. A process writes a file → directed edge from process to file. A process connects to an IP → directed edge from process to IP node.
+
+Tags are attached to nodes/edges:
+- **Integrity tags (t-tags)**: `untrusted`, `benign`, `invulnerable` — where did the content come from? Is the process trustworthy?
+- **Confidentiality tags (c-tags)**: `secret`, `sensitive`, `private`, `public` — how sensitive is the data?
+
+Tag initialization (from the workflow YAML):
+- Secrets / environment variables → `conf(secret)` or `conf(sensitive)`
+- Third-party GitHub Actions (actions not owned by the repo) → `integ(untrusted)`
+- First-party repo code, OS binaries → `integ(benign)` or `integ(invulnerable)`
+
+Tag propagation (taint tracking):
+- If an untrusted process reads a file → that file becomes tainted
+- If a process reads a secret file → the process output inherits conf(secret)
+- Conservative: output inherits the lowest integrity tag and highest confidentiality tag of all inputs
+
+### The 4 Attack Patterns We Are Studying
+
+All attacks are caused by malicious **third-party GitHub Actions** — external code plugged into a workflow via `uses: some-third-party/action@v1`. The repo owner did not write this code. It runs inside the CI pipeline with access to secrets and the build environment.
+
+**Attack 1 — Secret Exfiltration**:
+The third-party action reads a secret (e.g., `$SECRET_TOKEN` from env) and sends it to an external URL controlled by the attacker.
+- Provenance pattern: `[third-party process: untrusted]` → reads `[secret env var: conf(secret)]` → connects to `[attacker IP]` → writes secret data
+
+**Attack 2 — Malware Download & Execution**:
+The third-party action downloads a script from an attacker-controlled URL and executes it.
+- Provenance pattern: `[third-party process: untrusted]` → connects to `[attacker IP]` → writes `[/tmp/malware.sh]` → `[bash]` executes `/tmp/malware.sh`
+- The downloaded file inherits the `untrusted` tag because it came from an untrusted process
+- An benign process (bash) then executes an untrusted file
+
+**Attack 3 — SolarWinds (Build Artifact Poisoning)**:
+The third-party action modifies source code before compilation, so the malicious code gets baked into the build artifact. The artifact looks legitimate (built by the official build system) but is compromised.
+- Provenance pattern: `[third-party process: untrusted]` → writes to `[deploy.c]` → `[make/gcc: benign]` reads modified `deploy.c` → writes `[deploy binary]` → the binary is now tainted
+
+**Attack 4 — Living off the Land (LotL)**:
+The third-party action creates a malicious script using only tools already present on the system (echo, bash, curl) — no external download. The script is written inline and then executed.
+- Provenance pattern: `[third-party process: untrusted]` → uses echo (built-in bash) to write `[/tmp/evil.sh: untrusted]` → `[bash: benign]` executes untrusted script → bash reads secret env → connects to attacker IP
+
+### THE HARD PROBLEM: Benign vs Malicious Look Identical
+
+**The fundamental challenge**: For most of these attacks, the provenance graph pattern of the **benign version** and the **malicious version** is structurally identical. Only the destination or content differs — and the provenance graph does not capture content.
+
+**Exfiltration — the clearest example of the problem**:
+
+*Benign workflow*: A legitimate status reporter action reads `$SECRET_TOKEN` and sends it to `https://httpbin.org/post` (a monitoring service). This is the intended behavior.
+
+*Malicious workflow*: The same action also sends `$SECRET_TOKEN` to `https://attacker.com/exfil`.
+
+In the provenance graph, **both look like**:
+```
+[third-party process: untrusted] → reads [SECRET_TOKEN: conf(secret)] → connect([some IP]) → writes secret data
+```
+
+The structure is: untrusted process reads secret → writes to network. Both benign and malicious do this. The graph cannot tell them apart because:
+1. It doesn't capture the actual URL value (only that a connection happened)
+2. Even if it did capture the URL, you'd need a whitelist of "good" URLs — which is an infinite and unmaintainable list
+3. The "Pastebin problem": an attacker can always use a legitimate service (pastebin, webhook.site, requestbin) as a relay
+
+**Tag-based detection also fails here**:
+A tag-based rule saying "alarm if untrusted process reads secret and writes to network" would fire on BOTH the benign and malicious exfil. 100% false positive rate on legitimate CI pipelines that need to use secrets to authenticate to external services.
+
+**LotL — a secondary version of the problem**:
+Benign: cmake + make builds a project. A build tool is a "benign" process that reads source files and writes a binary.
+Malicious (LotL): the malicious action writes a script to /tmp using echo, bash executes it. In the graph, this looks like: bash (benign) writes a file, bash executes it. But bash does this all the time legitimately.
+
+**Malware — partially detectable but with false positives**:
+"Untrusted process downloads file → executes it" is detectable, but many legitimate actions do exactly this (e.g., installing tools via curl | bash, which is extremely common in CI).
+
+**SolarWinds — most detectable**:
+"A second process modifies the same build artifact after the first process wrote it" is a cleaner signal. But what if the build legitimately involves multiple steps that write to the same file?
+
+### Current State of Detection
+
+The E* rules that currently exist (`secret_exfit.es.txt`) are **filename-based**, not tag-based:
+- Watch process reads `/proc/*/environ` → watch if it then writes to external IP
+- Watch write to `/tmp/*` → alarm if same file gets executed
+- Watch first write to `*/dist/binary` → alarm if different process writes same file
+
+These are toy rules written before we understood the tag system. They need to be completely rewritten to use `integ()` and `conf()` tags. But even with tags, the exfiltration problem remains: the tag-based rule fires on both benign and malicious.
+
+### Potential Directions Being Considered
+
+**Direction 1 — Per-action graph coloring (Rigel's idea)**:
+Instead of a binary `untrusted/benign` tag, assign each third-party action its own unique integer tag ID using `def(i)`. Every entity produced by that action inherits `use(i)`. This enables pinning behavior to a specific action. If `actions/checkout` (trusted, open source) is assigned `def(1)` and a new unknown third-party action is assigned `def(2)`, you can distinguish their outputs even if both are "untrusted." This is more fine-grained but doesn't solve the "benign exfil" problem by itself.
+
+**Direction 2 — Destination-aware provenance**:
+Capture not just that a connection happened, but to what class of destination (known-good, unknown, known-bad). This requires a threat intelligence feed or a policy about what external destinations are acceptable for a given repo/workflow. Complex and brittle.
+
+**Direction 3 — Behavioral anomaly (not pure provenance)**:
+If the benign workflow only ever contacts one URL but the attack version contacts two, the difference is detectable as an anomaly — even if each individual connection looks benign. This requires a baseline of expected behavior.
+
+**Direction 4 — Workflow-aware policies**:
+Parse the workflow YAML to extract the declared behavior (what secrets the workflow says it uses, what URLs it says it contacts), then alarm on any behavior that exceeds the declared scope. E.g., if the workflow only declares `report_url` as an output destination, any other outbound connection from the same secret-reading process is an anomaly.
+
+### What We Need Help Thinking Through
+
+1. Is there a principled way to distinguish benign from malicious exfiltration using only provenance graph information (no content inspection, no URL whitelisting)?
+2. Can the tag system from Rigel's `tagnew.pdf` (def/use IDs, tagOps like merge/concat) help solve this?
+3. What E* rules should we write for each of the 4 attacks that have acceptable false positive rates?
+4. How does the academic literature handle this "intended vs unintended information flow" distinction?
 
 ---
 
@@ -315,12 +428,12 @@ Initial tags sourced from: workflow YAML (third-party actions → Unknown, secre
 - `benign-lotl-demo.yml` → uses `cmake-builder` action (cmake + make on main.c)
 - `benign-solarwinds-demo.yml` → uses `solarwinds-builder` action (cmake + make on deploy.c)
 
-### Attack Workflows 🔄 (in progress)
+### Attack Workflows ✅ (all pushed to cfvescovo/eactions)
 - Attack workflows call attack actions — workflows stay same, only action changes
-- `attack-exfil-demo.yml` → calls `attack-exfil` action (IN PROGRESS — add evil curl line)
-- `attack-malware-demo.yml` → calls `attack-malware` action (TODO)
-- `attack-lotl-demo.yml` → calls `attack-lotl` action (TODO)
-- `attack-solarwinds-demo.yml` → calls `attack-solarwinds` action (TODO)
+- `attack-exfil-demo.yml` → calls `attack-exfil` action (does legit curl + also exfils to attacker.com)
+- `attack-malware-demo.yml` → calls `attack-malware` action (does legit install + also downloads malware.sh from attacker.com)
+- `attack-lotl-demo.yml` → calls `attack-lotl` action (cmake+make + writes evil.sh inline with echo, bash executes it, exfils $SECRET_TOKEN)
+- `attack-solarwinds-demo.yml` → calls `attack-solarwinds` action (cmake, overwrites deploy.c with malicious printf, make deploy)
 
 ### Key Research Finding (from Carlo meeting 2026-04-08)
 Benign and malicious exfiltration are **behaviorally identical** in the provenance graph — same pattern, only destination differs. Whitelisting is not the answer (endless list, Pastebin problem). This is an open research problem. Dynamic per-action tagging (Rigel's idea) may help distinguish them.
@@ -335,12 +448,10 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 ## Next Actions
 
 ### IMMEDIATE
-- [ ] Finish `attack-exfil/action.yml` — add evil curl line (Rafid writing this)
-- [ ] Write `attack-malware/action.yml` — same as tool-installer but downloads from malicious URL
-- [ ] Write `attack-lotl/action.yml` — same as cmake-builder but also writes malicious file that make executes
-- [ ] Write `attack-solarwinds/action.yml` — same as solarwinds-builder but second process modifies the binary after build
-- [ ] Push all attack actions
-- [ ] Carlo runs benign workflows through eaudit pipeline and records provenance graphs
+- [x] All 4 attack actions written and pushed to cfvescovo/eactions ✅
+- [ ] Carlo runs benign + attack workflows through eaudit pipeline and records provenance graphs
+- [ ] Rewrite E* rules using tag-based policies (discard filename-based secret_exfit.es.txt)
+- [ ] Think through the benign vs malicious exfiltration problem (see Core Research Problem section)
 
 ### WHEN PIPELINE READY
 - [ ] Run attack workflows through eaudit → compare graphs with benign
