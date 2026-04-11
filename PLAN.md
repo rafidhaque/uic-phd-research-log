@@ -1,5 +1,5 @@
 # ProvAction — Research Project Plan
-> Last updated: 2026-04-10 (added core problem statement + updated attack workflow status)
+> Last updated: 2026-04-11 (5th meeting summary added)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -357,6 +357,64 @@ The three simulated in CI cover the main patterns. Full table of 7-8 attack vect
 
 ---
 
+## 5th Meeting Outcomes (2026-04-11, with Rigel + Carlo + Prof. Venkat)
+
+### Clarifications
+
+**Tags go on nodes, not edges.**
+Events (syscalls) are edges that show how information flows between nodes. Tags are properties of nodes (processes, files, IPs) and propagate from node to node as events occur. This was a source of confusion from tagnew.pdf — now resolved.
+
+**Real-time vs after the fact:**
+eaudit captures syscalls in real-time during the workflow run. E* rules fire on the provenance graph as events come in. The goal is **detection** (raise alarms), not **prevention** (block execution). Prof. Venkat: "prevention is not our purpose."
+
+### Environment Variable Problem (novel contribution area)
+Secrets in GitHub Actions are passed as `execve` arguments — they are not files/objects in the provenance graph, so they cannot be tagged directly.
+
+- **Carlo's current workaround**: when the secret token string is detected in the execve args, tag the whole process with `conf(secret)`
+- **Problem with this**: when backtracking forensically later, you hit the process and stop — there's no object to explain WHY it was tagged secret
+- **Rigel's suggestion**: create a **synthetic fake object** to represent the env var as a graph node, tag it `conf(secret)` → gives a complete backtracking chain
+- **Alternative**: create a new tag type like `conf(secret_env_var)` that encodes the env var origin
+- This is **novel work** — Sleuth/Host doesn't handle env var tagging. This is an area for contribution.
+
+### Benign vs Malicious Exfil — Pragmatic Resolution
+No clean theoretical fix, but meeting converged on this approach:
+1. Flag **everything** that looks like exfiltration (accept high false positives initially)
+2. Add a **secondary filter**: check if the destination URL/IP was declared in the workflow file
+3. Anything connecting to endpoints not in the workflow file = suspicious
+4. This is workflow-scoped dynamic whitelisting — not a global whitelist, just per-workflow scope
+
+This is what the **hardened runner** does at the network level. We do it at the provenance graph level.
+
+### Per-Action Tagging (Rigel's idea — confirmed as next step)
+Instead of binary untrusted/benign tags, encode the **origin action** in the tag itself using `def(i)/use(i)` from tagnew.pdf. Every node gets tagged with which specific action spawned it. This enables:
+- Precise backtracking to the exact action that caused suspicious behavior
+- Distinguishing between two third-party actions even if both are "untrusted"
+- Rigel put notes about this ("Genesis" idea) in the **brainstorming Google Doc** → Rafid must check this
+
+### Tag Initialization Approach
+Parse the workflow YAML **before** execution starts → transitive closure to identify all third-party (untrusted) vs first-party (benign) actions → initialize tags statically before runtime → tags propagate dynamically during execution.
+
+Carlo proposed: pre-process the workflow file to auto-generate E* rule initialization code (like C macros) so the tag setup happens at compile time, propagation at runtime.
+
+### Carlo's Automation Script
+Carlo has a bash script that automates the full eaudit capture loop:
+1. Start eaudit
+2. Start the GitHub Actions runner listener
+3. Trigger workflow via GitHub API (needed because push-triggered workflows only fire once)
+4. Wait for workflow to complete
+5. Stop listener + stop eaudit
+6. Save capture file
+
+This works for their current demo workflows and will scale to running 100+ workflows.
+
+### Next Steps (assigned in meeting)
+- **Rafid**: Read existing papers (Sleuth, WATSON, etc.) → write **evaluation plan** — what metrics, how to show improvement over state of the art (due before Monday 1PM meeting)
+- **Rafid**: Write **system architecture document** — two components: (1) workflow parser / policy creator, (2) monitoring/detection engine
+- **Rafid**: Check Rigel's "Genesis" notes in the brainstorming Google Doc
+- **Next meeting: Monday 1PM** (Rigel joining)
+
+---
+
 ## Pending Questions / Open Problems
 
 1. **Abstract pattern formulation** — what stays the same across attack variants? (the active research question)
@@ -447,11 +505,12 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 
 ## Next Actions
 
-### IMMEDIATE
+### IMMEDIATE (before Monday 1PM meeting)
 - [x] All 4 attack actions written and pushed to cfvescovo/eactions ✅
+- [ ] Read papers (Sleuth, WATSON, etc.) and write **evaluation plan** — metrics + how we improve state of the art
+- [ ] Write **system architecture document** — two components: (1) workflow parser/policy creator, (2) detection engine
+- [ ] Check Rigel's "Genesis" notes in the brainstorming Google Doc (Slack/Drive)
 - [ ] Carlo runs benign + attack workflows through eaudit pipeline and records provenance graphs
-- [ ] Rewrite E* rules using tag-based policies (discard filename-based secret_exfit.es.txt)
-- [ ] Think through the benign vs malicious exfiltration problem (see Core Research Problem section)
 
 ### WHEN PIPELINE READY
 - [ ] Run attack workflows through eaudit → compare graphs with benign
