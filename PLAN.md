@@ -1,5 +1,5 @@
-# ProvAction — Research Project Plan
-> Last updated: 2026-04-13 (6th meeting + contribution clarification added)
+# EAction — Research Project Plan
+> Last updated: 2026-04-13 (6th meeting + contribution clarification + renamed to EAction)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -156,7 +156,7 @@ Parse the workflow YAML to extract the declared behavior (what secrets the workf
 
 ## What This Project Is
 
-**ProvAction** — Runtime security monitoring for GitHub Actions using kernel-level provenance tracing.
+**EAction** — Runtime security monitoring for GitHub Actions using kernel-level provenance tracing.
 
 The core idea: GitHub Actions workflows are blind to what third-party actions actually do at runtime. We use eaudit (eBPF-based syscall tracer) to capture a provenance graph of everything that happens during a workflow run, then use that graph to detect or discover attacks.
 
@@ -374,11 +374,11 @@ Rafid came in with a table of metrics from 10 papers (SLEUTH, HOLMES, MORSE, UNI
 He wants a separate 1-on-1 meeting with Rafid to course correct. **Rafid must schedule this ASAP.**
 
 ### What Venkat Actually Wants
-NOT a comprehensive metrics table from all provenance papers. YES: understand the specific contribution of ProvAction, identify the closest competing tools, and explain how ProvAction is better. Then metrics follow from that.
+NOT a comprehensive metrics table from all provenance papers. YES: understand the specific contribution of EAction, identify the closest competing tools, and explain how EAction is better. Then metrics follow from that.
 
 The framing he wants: **"If the author of SLEUTH reviewed our paper, what would they critique? How do we answer that?"**
 
-### ProvAction's Research Contribution (Clarified)
+### EAction's Research Contribution (Clarified)
 
 **vs ARGUS and GHAST (static analysis tools):**
 - They read the workflow YAML before execution — they never run anything
@@ -401,7 +401,7 @@ The framing he wants: **"If the author of SLEUTH reviewed our paper, what would 
 - Rafid should verify Harden-Runner's documentation to confirm it has no provenance/forensics capability before claiming this
 
 ### The One-Line Contribution
-**Static tools (ARGUS/GHAST) miss all runtime attacks. Runtime tools (Harden-Runner) catch some but cannot explain the causal chain. ProvAction provides runtime detection WITH provenance-based forensics — the first system to do both for CI/CD.**
+**Static tools (ARGUS/GHAST) miss all runtime attacks. Runtime tools (Harden-Runner) catch some but cannot explain the causal chain. EAction provides runtime detection WITH provenance-based forensics — the first system to do both for CI/CD.**
 
 ### Metrics (now properly framed)
 - **Detection coverage**: how many of the 4 attack types do we catch? (compare: ARGUS catches 0, Harden-Runner catches ~3)
