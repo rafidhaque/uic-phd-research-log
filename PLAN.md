@@ -1,5 +1,5 @@
 # ProvAction — Research Project Plan
-> Last updated: 2026-04-11 (5th meeting summary added)
+> Last updated: 2026-04-13 (6th meeting + contribution clarification added)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -354,6 +354,74 @@ The three simulated in CI cover the main patterns. Full table of 7-8 attack vect
 - Persistent storage: cache, work folder (self-hosted runners only)
 
 **Sources**: always third-party GitHub Action processes
+
+---
+
+## 6th Meeting Outcomes (2026-04-13, with Venkat, Rigel, Carlo + others)
+
+### What Happened
+Carlo demoed the 8 workflows (4 benign + 4 attack) and the detection system. Rafid presented evaluation metrics from literature. Venkat was not satisfied with Rafid's presentation.
+
+### Venkat's Core Critique
+Rafid came in with a table of metrics from 10 papers (SLEUTH, HOLMES, MORSE, UNICORN, ARGUS, etc.). Venkat's response:
+
+> *"The only thing you need to worry about are the works that are applying that to securing GitHub Actions."*
+
+> *"What is the state of art and how does this work improve the state of art?"*
+
+> *"I'm not sure you understand what the problem is given to you... if you are spending time on things that are not of primary importance at this stage, that's a red flag."*
+
+He wants a separate 1-on-1 meeting with Rafid to course correct. **Rafid must schedule this ASAP.**
+
+### What Venkat Actually Wants
+NOT a comprehensive metrics table from all provenance papers. YES: understand the specific contribution of ProvAction, identify the closest competing tools, and explain how ProvAction is better. Then metrics follow from that.
+
+The framing he wants: **"If the author of SLEUTH reviewed our paper, what would they critique? How do we answer that?"**
+
+### ProvAction's Research Contribution (Clarified)
+
+**vs ARGUS and GHAST (static analysis tools):**
+- They read the workflow YAML before execution — they never run anything
+- They CANNOT detect any of our 4 attack types (exfil, malware, LotL, SolarWinds) because all 4 attacks happen at runtime inside the action script
+- The YAML looks completely innocent — static tools see nothing wrong
+- Our metric here: **detection coverage** — we catch attacks that static tools miss entirely
+
+**vs Granite:**
+- Permission reduction tool only, not attack detection
+- Not a direct competitor
+
+**vs Harden-Runner (StepSecurity):**
+- This is our real competitor — it IS a runtime tool
+- It monitors network egress, workflow dependencies, source code integrity
+- It handles exfil, malware, and SolarWinds reasonably well via network monitoring
+- It struggles with LotL (no network activity to monitor)
+- BUT: it does not build a provenance graph — it cannot give you the full causal chain
+- Example: Harden-Runner can say "suspicious outbound connection detected" but cannot say "the curl process got the secret because it was spawned by this third-party action which read it from the execve arguments of the runner process"
+- **That full causal chain for forensics and root cause analysis is what provenance gives you**
+- Rafid should verify Harden-Runner's documentation to confirm it has no provenance/forensics capability before claiming this
+
+### The One-Line Contribution
+**Static tools (ARGUS/GHAST) miss all runtime attacks. Runtime tools (Harden-Runner) catch some but cannot explain the causal chain. ProvAction provides runtime detection WITH provenance-based forensics — the first system to do both for CI/CD.**
+
+### Metrics (now properly framed)
+- **Detection coverage**: how many of the 4 attack types do we catch? (compare: ARGUS catches 0, Harden-Runner catches ~3)
+- **False positive rate**: does the alarm fire on benign workflows? (our hardest problem — exfil)
+- **Precision/Recall**: standard classification metrics for our own system
+- **Provenance quality**: can we trace the attack back to its root cause? (qualitative, novel to our work)
+- Provenance graph reduction metrics (SLEUTH-style) are **secondary** — not the headline
+
+### Technical Updates from Meeting
+- Carlo confirmed all 8 traces captured and working
+- Tag initialization from workflow YAML is the right approach (Venkat confirmed)
+- Third-party actions should be tagged untrusted based on namespace (not local ./github/actions but external org/repo@version) — this is a future improvement
+- Workflow-scoped whitelist for network destinations is the right direction for reducing false positives
+- Detection (not blocking) is the goal — confirmed by all
+
+### Next Steps
+- [ ] Rafid schedules 1-on-1 with Venkat ASAP to course correct
+- [ ] Verify Harden-Runner documentation — does it do provenance/forensics?
+- [ ] Reframe evaluation plan around the contribution (not metrics table)
+- [ ] Run workflowDetect.ese against the 8 captured .out files — verify alarm fires on attacks, silent on benign
 
 ---
 
