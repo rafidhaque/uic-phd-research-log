@@ -1,7 +1,7 @@
 # EAction Pipeline Tutorial (DRAFT — needs Carlo's corrections)
 
 > Written by Rafid based on meeting notes and codebase exploration.
-> **Carlo: please correct anything wrong and fill in the [?] sections.**
+> Integrated missing information - CFV, 4/14/2026
 
 ---
 
@@ -81,14 +81,13 @@ The compiled detection policy is at `Host/actions/workflowDetect.ese`.
 
 The policy was compiled from `Host/actions/workflowDetect.es` using the E* compiler (`esc/esc`).
 
+Compile command: `./esbuild actions/workflowDetect.es actions/workflowDetect.C` (from the Host folder)
+
 ### Run detection against a capture file:
 
-**[? Carlo — what is the exact command to run workflowDetect.ese against a .out file?]**
-
-Something like:
 ```bash
 cd Host/actions/
-./workflowDetect.ese -I runs/attack-exfil-demo.out
+./workflowDetect.ese -r runs/attack-exfil-demo.out
 ```
 
 ### Expected output:
@@ -100,26 +99,13 @@ For **attack** traces, you should see an alarm like:
 
 For **benign** traces, you should see **no alarm output**.
 
-**[? Carlo — is there any other output to check, or just presence/absence of the alarm line?]**
-
 ---
 
 ## Part 3 — Recompiling the Detection Policy (if you edit the rules)
 
 If you modify `workflowDetect.es` and need to recompile:
 
-**[? Carlo — what is the exact compile command? Something like:]**
-```bash
-cd Host/actions/
-../../esc/esc workflowDetect.es
-```
-
-Then rebuild the binary:
-```bash
-make   # or whatever build command applies here
-```
-
-**[? Carlo — is there a Makefile in Host/actions/ or do you compile manually?]**
+`./esbuild actions/workflowDetect.es actions/workflowDetect.C` (from the Host folder)
 
 ---
 
@@ -155,16 +141,16 @@ To verify the pipeline is working correctly from scratch:
 2. Run detection on each trace:
    ```bash
    # Should produce alarms:
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/attack-exfil-demo.out
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/attack-lotl-demo.out
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/attack-malware-demo.out
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/attack-solarwinds-demo.out
+   ./workflowDetect.ese -r runs/attack-exfil-demo.out
+   ./workflowDetect.ese -r runs/attack-lotl-demo.out
+   ./workflowDetect.ese -r runs/attack-malware-demo.out
+   ./workflowDetect.ese -r runs/attack-solarwinds-demo.out
 
    # Should produce NO alarms:
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/benign-exfil-demo.out
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/benign-lotl-demo.out
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/benign-malware-demo.out
-   ./Host/actions/workflowDetect.ese -I Host/actions/runs/benign-solarwinds-demo.out
+   ./workflowDetect.ese -r runs/benign-exfil-demo.out
+   ./workflowDetect.ese -r runs/benign-lotl-demo.out
+   ./workflowDetect.ese -r runs/benign-malware-demo.out
+   ./workflowDetect.ese -r runs/benign-solarwinds-demo.out
    ```
 
 3. Verify results match expectations (alarm on attack, silence on benign).
@@ -173,12 +159,14 @@ To verify the pipeline is working correctly from scratch:
 
 ## Common Issues
 
-**[? Carlo — what are the most common things that go wrong? Please add here.]**
-
-- eauditd fails to start → check BCC installation, run `./bcc_install.sh`
-- Runner fails to start → **[? Carlo]**
+In normal conditions, as of 4/14/2026, there should be no issues with traces collection in our Proxmox VM environment.
+I'm leaving the following list here for future reference.
+- eauditd fails to start → check BCC installation, run `./bcc_install.sh` (DO NOT RUN ON CURRENT PROXMOX ENV; THIS SHOULD NOT HAPPEN. IF IT DOES, INFORM CARLO ASAP)
+- Runner fails to start: never happened to me, maybe something is wrong with the service? Check status with svc.sh status or using systemctl
 - `gh run rerun` fails → make sure `gh` is authenticated: `gh auth status`
-- `.out` file is empty → **[? Carlo — what does this usually mean?]**
+- `.out` file is empty → wait, eaudit is still working
+
+It's much more common for the detection part to have issues, especially if investigating traces with fql (i.e. through fqsh). Unfortunately, there are no specific fixes: most of the problems are caused by incompatibilities between Host/eaudit and the old fql code.
 
 ---
 
@@ -194,6 +182,8 @@ The pipeline runs on Carlo's Proxmox VM. To access it:
 3. Login to VM 104, username: `rafid`, password: `consumer`
 4. The nhost folder is at: `~/Desktop/Marco/nhost/`
 
+Use VSCode Remote SSH plugin whenever possible, it's generally more performant and convenient than using Proxmox's own web UI.
+
 ---
 
-*Last updated: 2026-04-13 | Send corrections to Rafid*
+*Last updated: 2026-04-14 | Send corrections to Rafid*

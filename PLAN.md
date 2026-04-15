@@ -1,5 +1,5 @@
 # EAction — Research Project Plan
-> Last updated: 2026-04-13 (6th meeting + contribution clarification + renamed to EAction)
+> Last updated: 2026-04-14 (7th meeting added, pipeline tutorial complete, next actions updated)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -357,6 +357,54 @@ The three simulated in CI cover the main patterns. Full table of 7-8 attack vect
 
 ---
 
+## 7th Meeting Outcomes (2026-04-14, 1-on-1 with Venkat)
+
+### What Happened
+Rafid had the 1-on-1 that Venkat requested at the end of the 6th meeting. Rafid came in having course-corrected — sent Venkat a message the night before with the correct two-claim framing. Venkat accepted it and moved straight to research direction. Venkat set up Basecamp as a project management tool with 3 tasks.
+
+### Venkat's Key Technical Point on Harden-Runner
+Venkat articulated the core EAction vs Harden-Runner difference precisely:
+> *"Harden-Runner just… there is no state context in Harden-Runner. They are looking at policies as essentially being applicable to single nodes or edges in our provenance graph... whereas we do have a stateful tracking of provenance across the whole workflow, and therefore it is possible to enforce a much richer set of policies."*
+
+Concrete example he gave: "You can communicate to that attacker website, that's fine, but only so long as you have not read any sensitive files." — this policy requires state tracking across the workflow. Harden-Runner cannot do it. EAction can.
+
+### The Three-Phase System Model (Venkat's vision)
+Venkat described how EAction should work in three modes:
+
+1. **Development time (baseline)**: Run the workflow with only trusted/internal components. Capture all behavior. This becomes the baseline security policy — what "normal" looks like.
+2. **Runtime check**: When the workflow runs with third-party actions included, compare against the baseline. Deviations = alarm.
+3. **Dry run / triaging**: For unknown third-party actions, optionally run them in isolation first to probe what they're capable of before deciding to trust them.
+
+This three-phase model is the basis for **baseline policy generation** — one of the key research questions.
+
+### Three Deliverables for Next Meeting (Thursday)
+Venkat assigned these explicitly (also on Basecamp):
+
+1. **Evaluation overview** — detection table + forensics comparison. Add to Overleaf. Two claims: (a) we detect attacks static tools miss, (b) we provide better causal chain than Harden-Runner.
+
+2. **Research questions** — write as many as possible informed by prior work that showcase novelty. Venkat will pick the best ones. Paper needs 2-3 subsections (3.1, 3.2, 3.3) each representing a novel contribution.
+
+3. **Approach for baseline policy generation** — sketch how EAction would learn a baseline from a benign workflow run, then use it to detect deviations when untrusted actions are introduced.
+
+### Paper Structure (Venkat's guidance)
+- Section 1: Introduction
+- Section 2: Related work — firmly establishes no prior work solved this problem
+- Section 3: System design — 2-3 subsections, each a novel contribution (NOT implementation details)
+- Section 4: Implementation — eaudit, E* rules, technical details go here
+
+"Section 3 is novel elements. Section 4 is implementation. What is in 3 is still novel."
+
+### Important Note on Scope
+Venkat: "You're building a research prototype, not a commercial product. Design test cases that cover common cases. As long as the system catches those in evaluation, that's good enough."
+
+### Technical Issue Raised by Carlo
+eBPF probe ignores `truncate` syscalls — so SolarWinds-style attack (overwrite source before compile) may not be caught. Venkat's suggestion: pull eaudit, make the fix in a branch, send to Sagar/Sekar.
+
+### Next Meeting
+Thursday (group meeting with Rigel). Monday group meeting was cancelled (Rigel busy with proposals).
+
+---
+
 ## 6th Meeting Outcomes (2026-04-13, with Venkat, Rigel, Carlo + others)
 
 ### What Happened
@@ -573,23 +621,22 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 
 ## Next Actions
 
-### IMMEDIATE (before Monday 1PM meeting)
-- [x] All 4 attack actions written and pushed to cfvescovo/eactions ✅
-- [ ] Read papers (Sleuth, WATSON, etc.) and write **evaluation plan** — metrics + how we improve state of the art
-- [ ] Write **system architecture document** — two components: (1) workflow parser/policy creator, (2) detection engine
-- [ ] Check Rigel's "Genesis" notes in the brainstorming Google Doc (Slack/Drive)
-- [ ] Carlo runs benign + attack workflows through eaudit pipeline and records provenance graphs
+### IMMEDIATE (before Thursday meeting)
+- [ ] Write **evaluation overview** — detection coverage table + forensics comparison. Add to Overleaf.
+- [ ] Write **research questions list** — as many as possible showcasing novelty over prior work
+- [ ] Sketch **approach for baseline policy generation** — how EAction learns normal behavior, detects deviations
+- [ ] Run `workflowDetect.ese -r` against all 8 `.out` files on VM — verify alarms fire on attacks, silent on benign
 
-### WHEN PIPELINE READY
-- [ ] Run attack workflows through eaudit → compare graphs with benign
-- [ ] Update E* rules with tag-based policies (replace filename-based rules in secret_exfit.es.txt)
-- [ ] Verify: alarm fires on attack workflow, stays silent on benign
+### PIPELINE
+- [x] All 8 traces captured (attack + benign) ✅
+- [x] Pipeline tutorial complete (Carlo filled in on 2026-04-14) ✅ — see `EAction-Pipeline-Tutorial-DRAFT.md`
+- [ ] Fix `truncate` syscall missing in eBPF probe — branch eaudit, send fix to Sagar/Sekar
+- [ ] Extend E* rules to cover malware, LotL, SolarWinds attacks (only exfil rule exists currently)
 
 ### OTHER ONGOING
-- [ ] Check Slack for tag design document Rigel shared
-- [ ] Read about DFQL/FQL query language in Host codebase (Carlo knows this well)
+- [ ] Check Rigel's "Genesis" notes in brainstorming Google Doc (Slack/Drive)
+- [ ] Read about FQL/fqsh query language in Host codebase (Carlo knows this)
 - [ ] Learn what dev/shm is (professor tested Rafid on this, didn't know)
-- [ ] Next meeting: Friday 10 AM (moved from original time)
 
 ---
 
