@@ -409,6 +409,36 @@ Venkat told Rafid separately (office visit) to get hands-on with the implementat
 
 ---
 
+## Carlo Meeting 2 Outcomes (2026-04-17, Rafid + Carlo)
+
+### Graph Comparison Approach for Section 3.1
+Carlo and Rafid converged on using **graph comparison** as the core of baseline policy generation:
+- Run benign workflow → capture provenance graph G1 (the baseline)
+- Run with untrusted third-party actions → capture graph G2
+- Measure graph distance between G1 and G2
+- Deviations beyond a threshold = alarm
+- This directly answers Venkat's baseline policy generation question
+
+### Counterfactual Explanations for Section 3.3 (Forensics)
+For the forensics section, Carlo proposed **counterfactual explanations**:
+- Find the minimal modification to the attack graph that would make it look benign
+- This tells the analyst exactly what changed — the smallest difference between the benign and attack graph
+- Strong research angle: "what is the minimum set of edges/nodes that explain why this was flagged?"
+
+### Key Decision: Single Path Assumption
+Agreed to assume workflows have one execution path per run. Static analysis pre-computes all possible paths for conditional branches. This avoids exponential path explosion and simplifies policy generation significantly.
+
+### Two-Step Policy Approach
+- Generic policy: automatically generated from benign run (covers all detections)
+- Developer whitelist: exceptions for things that trigger alarms but are known benign
+- Developer annotates which files/env vars are secrets — system uses this for tagging
+
+### Blockers
+- Environment variable tracing when passed to child processes — not fully implemented
+- Graph visualization tool — Carlo working on a notebook for this
+
+---
+
 ## 7th Meeting Outcomes (2026-04-14, 1-on-1 with Venkat)
 
 ### What Happened
