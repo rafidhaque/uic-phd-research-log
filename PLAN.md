@@ -433,6 +433,14 @@ Agreed to assume workflows have one execution path per run. Static analysis pre-
 - Developer whitelist: exceptions for things that trigger alarms but are known benign
 - Developer annotates which files/env vars are secrets — system uses this for tagging
 
+### Developer Input Required (important for Section 3.1)
+The system cannot automatically know what is sensitive. Before running, the developer must provide:
+1. **Which files/folders contain secrets** — so the system can tag them correctly
+2. **Which env vars are sensitive** — since secrets are passed as execve args, not files
+3. **Known-benign destinations whitelist** — to avoid false positives on legitimate outbound connections
+
+Without this setup step, the system either flags everything (too many false positives) or misses things (tags nothing). This developer annotation step is part of the baseline policy generation flow in Section 3.1.
+
 ### Blockers
 - Environment variable tracing when passed to child processes — not fully implemented
 - Graph visualization tool — Carlo working on a notebook for this
