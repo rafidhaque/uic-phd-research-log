@@ -1,5 +1,5 @@
 # EAction — Research Project Plan
-> Last updated: 2026-04-14 (7th meeting added, pipeline tutorial complete, next actions updated)
+> Last updated: 2026-04-17 (8th meeting added, next actions updated)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -357,6 +357,58 @@ The three simulated in CI cover the main patterns. Full table of 7-8 attack vect
 
 ---
 
+## 8th Meeting Outcomes (2026-04-17, group meeting with Venkat, Rigel, Carlo)
+
+### Overall Tone
+Positive and constructive. Venkat was encouraging and pushing hard toward a submission deadline.
+
+### Key Quote from Venkat
+> "About 60% of what is needed to write a paper is done. Now, the important 40% comes... designing those scripts, doing some evaluation... it's brain work."
+
+### Submission Target
+Venkat is pushing toward **May 6th** (Usenix Security or NDSS). He said writing can be done in two weeks once the structure is clear. He proposed adding a **second weekly meeting on Mondays** to keep momentum.
+
+### On Research Questions
+Venkat pushed back on how the RQs were framed:
+- They were too "leading" — they presuppose the answer
+- Questions should NOT be binary yes/no — they should allow complex answers ("some cases better, some cases worse")
+- Questions should be hierarchically organized: some are section-level, some subsection-level, not just a flat list
+- Read other papers to see how research questions are phrased
+
+### On Baseline Policy Generation (Section 3.1)
+- Venkat called it *"the most substantial and novel"* part of the work
+- *"Clearly, there exists no system today that allows for automatic policy generation"*
+- Developer refinement is acceptable — doesn't need to be fully automatic
+- The challenge: naive approaches will be too specific (e.g., DNS changes, variable name obfuscation break them)
+
+### Paper Structure (confirmed)
+- Section 3: System design — 3 subsections, each a novel contribution:
+  - **3.1**: Baseline policy generation
+  - **3.2**: Detection system
+  - **3.3**: Forensics / tracing
+- Section 4: Implementation details (eaudit, E* rules, etc.)
+- For each of 3.1/3.2/3.3: create a figure + list of open research challenges
+
+### On Harden-Runner Comparison
+> "Harden-Runner just checks single events in isolation. We have stateful tracking of provenance across the whole workflow — therefore we can enforce a much richer set of policies."
+
+This needs to be front and center in the evaluation.
+
+### New Direction: AI-Generated Attacks
+Rafid raised a blog post about GitHub AI agents. Venkat said: *"If we can detect attacks written by humans, we should also be able to detect attacks written by AI."* He suggested mentioning this in the discussion section as future work — not including it in the main paper.
+
+### Deliverables for Next Meeting
+- [ ] Refine research questions — restructure hierarchically, remove leading framing
+- [ ] Evaluation overview — paragraph-level outline of the entire evaluation section
+- [ ] Sketches for Sections 3.1, 3.2, 3.3 — figure + open research challenges for each
+- [ ] Generate sample policies from benign workflow runs
+- [ ] Add conference template (Usenix/NDSS) to Overleaf
+
+### Note on Implementation
+Venkat told Rafid separately (office visit) to get hands-on with the implementation — Carlo is doing too much and Rafid needs to learn independently. Study plan created at `Study-Plan.md`.
+
+---
+
 ## 7th Meeting Outcomes (2026-04-14, 1-on-1 with Venkat)
 
 ### What Happened
@@ -621,10 +673,12 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 
 ## Next Actions
 
-### IMMEDIATE (before Thursday meeting)
-- [ ] Write **evaluation overview** — detection coverage table + forensics comparison. Add to Overleaf.
-- [ ] Write **research questions list** — as many as possible showcasing novelty over prior work
-- [ ] Sketch **approach for baseline policy generation** — how EAction learns normal behavior, detects deviations
+### IMMEDIATE (next meeting)
+- [ ] Refine research questions — remove leading framing, organize hierarchically
+- [ ] Evaluation overview — paragraph-level outline of entire evaluation section. Add to Overleaf.
+- [ ] Sketches for Sections 3.1, 3.2, 3.3 — figure + open research challenges for each
+- [ ] Generate sample policies from benign workflow runs
+- [ ] Add Usenix/NDSS conference template to Overleaf
 - [ ] Run `workflowDetect.ese -r` against all 8 `.out` files on VM — verify alarms fire on attacks, silent on benign
 
 ### PIPELINE
