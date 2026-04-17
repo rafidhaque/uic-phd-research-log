@@ -711,10 +711,12 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 
 ## Next Actions
 
-### IMMEDIATE (next meeting)
-- [ ] Refine research questions — remove leading framing, organize hierarchically
-- [ ] Evaluation overview — paragraph-level outline of entire evaluation section. Add to Overleaf.
-- [ ] Sketches for Sections 3.1, 3.2, 3.3 — figure + open research challenges for each
+### IMMEDIATE (next meeting) — Basecamp tasks
+- [ ] **Refine research questions** — remove leading framing, organize hierarchically, insert into eval section in Overleaf
+- [ ] **Evaluation overview** — paragraph-level outline of entire evaluation section. Add to Overleaf.
+- [ ] **Sketch and approach for baseline policy generation, triaging and runtime check** — figure + open research challenges for Sections 3.1, 3.2, 3.3
+
+### ALSO PENDING
 - [ ] Generate sample policies from benign workflow runs
 - [ ] Add Usenix/NDSS conference template to Overleaf
 - [ ] Run `workflowDetect.ese -r` against all 8 `.out` files on VM — verify alarms fire on attacks, silent on benign
