@@ -719,7 +719,28 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 ### ALSO PENDING
 - [ ] Generate sample policies from benign workflow runs
 - [ ] Add Usenix/NDSS conference template to Overleaf
-- [ ] Run `workflowDetect.ese -r` against all 8 `.out` files on VM — verify alarms fire on attacks, silent on benign
+- [x] Run `workflowDetect.ese` against all 8 `.out` files on VM ✅ (2026-04-18)
+
+### Detection Results (2026-04-18)
+Command used: `./workflowDetect.ese runs/<name>.out -S 127.0.0.1:9999:9998 -R 127.0.0.1:127.0.0.1:9999`
+
+| Scenario | Alarms | Result |
+|---|---|---|
+| attack-exfil | SensitiveExfiltration, LocalActionNetworkWrite | Detected ✅ |
+| benign-exfil | SensitiveExfiltration, LocalActionNetworkWrite | False Positive ❌ |
+| attack-malware | UnexpectedActionDownload, UnexpectedActionExecution, LocalActionNetworkWrite | Detected ✅ |
+| benign-malware | LocalActionNetworkWrite | False Positive ❌ |
+| attack-lotl | LocalActionNetworkWrite | Detected ✅ |
+| benign-lotl | none | Clean ✅ |
+| attack-solarwinds | none | Missed ❌ |
+| benign-solarwinds | none | Clean ✅ |
+
+**Key findings:**
+- Malware and LotL detected correctly
+- Exfil detected but benign also triggers — confirmed false positive problem (benign sends token to httpbin.org which looks identical to attack)
+- SolarWinds missed — eaudit does not capture `truncate` syscalls, so source file overwrite before compilation is invisible
+- Benign malware has one FP from git clone to GitHub IP during Helm install
+- LotL attack: `stolen=` was empty in the alarm — secret token value not captured in the exfil payload
 
 ### PIPELINE
 - [x] All 8 traces captured (attack + benign) ✅
