@@ -725,7 +725,7 @@ He gave example for RQ1: (a) what is a baseline policy, (b) how to augment with 
 **RQ1: How can we automatically derive a baseline policy from a benign workflow run?**
 - How can we define a baseline from a CI/CD provenance?
 - How to incorporate project-specific policies (developer intent) in the baseline?
-- How can these representations be used to differentiate between benign and malicious runs?
+- How can these be summarized into a policy representation that can be used for detection later?
 
 **RQ2: What attacks can be detected by detecting deviations from a learned baseline, that existing static and network-based tools miss?**
 - How can we differentiate benign from malicious activity when they produce identical provenance patterns?
