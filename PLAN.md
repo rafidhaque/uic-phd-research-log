@@ -1,5 +1,5 @@
 # EAction — Research Project Plan
-> Last updated: 2026-04-17 (8th meeting added, next actions updated)
+> Last updated: 2026-04-19 (detection results added, RQ sub-questions drafted, Harden-Runner comparison done)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -712,9 +712,37 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 ## Next Actions
 
 ### IMMEDIATE (next meeting) — Basecamp tasks
-- [ ] **Refine research questions** — remove leading framing, organize hierarchically, insert into eval section in Overleaf
-- [ ] **Evaluation overview** — paragraph-level outline of entire evaluation section. Add to Overleaf.
-- [ ] **Sketch and approach for baseline policy generation, triaging and runtime check** — figure + open research challenges for Sections 3.1, 3.2, 3.3
+- [x] **Refine research questions** — hierarchical with sub-questions showing novel work. Sent to Venkat for feedback. ✅
+- [ ] **Evaluation overview** — RQ2 (detection table with real results) and RQ3 (forensics comparison) done. RQ1 (baseline policy) still TODO. Insert RQs into eval section in Overleaf.
+- [ ] **Sketch and approach for baseline policy generation, triaging and runtime check** — assigned to Carlo on Basecamp (figures + open research challenges for Sections 3.1, 3.2, 3.3)
+
+### Venkat's Feedback on RQs (2026-04-19)
+Venkat asked: under each RQ, list what NEW research (not in any prior publication) will be performed.
+He gave example for RQ1: (a) what is a baseline policy, (b) how to augment with project-specific policies, (c) how to represent for detection.
+
+### Research Questions with Sub-Questions (drafted 2026-04-19)
+
+**RQ1: How can we automatically derive a baseline policy from a benign workflow run?**
+- How can we define a baseline from a CI/CD provenance?
+- How to incorporate project-specific policies (developer intent) in the baseline?
+- How can these representations be used to differentiate between benign and malicious runs?
+
+**RQ2: What attacks can be detected by detecting deviations from a learned baseline, that existing static and network-based tools miss?**
+- How can we differentiate benign from malicious activity when they produce identical provenance patterns?
+- How can we detect attacks that use only trusted tools?
+- How do we detect file modifications done with malicious intent?
+- What types of attacks can only be solved using stateful (runtime) tracking of events?
+
+**RQ3: What does a complete attack reconstruction look like in a CI/CD pipeline?**
+- What information does an analyst need to fully understand a CI/CD attack?
+- How can we capture secrets that are passed in memory (e.g. environment variables)? (Rigel's synthetic node idea)
+- How to identify the minimal causal subgraph that explains why an alarm was flagged? (Carlo's counterfactual idea)
+- How to identify which specific action was the culprit? (Rigel's per-action graph coloring with def(i)/use(i))
+
+### Harden-Runner vs EAction Forensics Comparison (from documentation + real run)
+**Harden-Runner shows:** destination IP/domain, process name + PID, parent process (one level), HTTP method/path, which step. Does NOT show what data was sent. Requires manual cross-referencing across multiple tabs.
+**EAction shows:** full command with actual secret value, destination IP, why it was flagged (SECRET tag from token= in args), which workflow and action. Full story in one alarm output.
+See `detection-run-results.md` for all 8 scenario outputs.
 
 ### ALSO PENDING
 - [ ] Generate sample policies from benign workflow runs
