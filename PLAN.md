@@ -1,5 +1,5 @@
 # EAction — Research Project Plan
-> Last updated: 2026-04-19 (detection results added, RQ sub-questions drafted, Harden-Runner comparison done)
+> Last updated: 2026-04-22 (9th meeting processed, RQ sub-questions need rework per Venkat feedback, mindset shift documented)
 > To resume: tell Claude "read PLAN.md and continue the project"
 
 ---
@@ -354,6 +354,94 @@ The three simulated in CI cover the main patterns. Full table of 7-8 attack vect
 - Persistent storage: cache, work folder (self-hosted runners only)
 
 **Sources**: always third-party GitHub Action processes
+
+---
+
+## 9th Meeting Outcomes (2026-04-22, group meeting with Venkat, Rigel, Carlo)
+
+### Overall Tone
+Venkat was direct and critical of Rafid's sub-questions. Teaching moment — not angry, but firm. Carlo and Rigel contributed ideas for a potential third research component.
+
+### Venkat's Core Critique of RQ Sub-Questions
+Venkat's central point, repeated multiple ways throughout the meeting:
+- The sub-questions Rafid submitted describe work that is **already known from prior papers** (Sleuth, Holmes, etc.)
+- You cannot instantiate existing techniques in a new context and call it novel research
+- Each bullet must describe work whose answer is **genuinely unknown** and requires investigation
+- Example: "How to differentiate benign from malicious?" → Venkat said tag propagation already solves this. Not a research question.
+
+### Venkat's Process for Writing Research Questions
+**Write bullets first, questions second.**
+1. List the specific novel work you will do under a broad area (e.g., "attack detection")
+2. Make sure each bullet is genuinely new — not found in Sleuth, Holmes, or any prior paper
+3. Once bullets make sense as individual questions, summarize them into one high-level research question on top
+4. Do NOT write the question first and then struggle to find what goes under it
+
+### RQ1 Sub-Questions — Approved
+Venkat confirmed his three sub-questions for RQ1 are correct:
+- Baseline policy = what applies to ALL workflows (e.g., don't compromise log files)
+- Project-specific policy = whitelisting trusted URLs, marking secrets, developer annotations
+- These two get synthesized into a monitor for runtime checking
+
+### RQ2 Sub-Questions — Rejected, Need Full Rework
+Venkat did not review RQ2 in detail because the bullets were not on target. He said: "I am not even looking at what is there in RQ2" until the bullets show genuinely novel work.
+
+### RQ3 (Forensics) — May Not Be Substantive Enough
+Venkat raised the possibility of **dropping forensics as a full research section**:
+> "I'm not sure that the forensic area is substantive enough at that point."
+
+Carlo argued forensics is needed for completeness ("a complete approach from start to finish"). Venkat agreed it can be mentioned but questioned whether it's worthy of being elevated to a research area / Section 3 component. He said:
+> "We need to do something new there. What is interesting about the CI-CD context where a forensic trace generation approach can actually help?"
+
+### Carlo's Idea for Forensics (if kept)
+Trace attacks back not just to nodes in the provenance graph, but to **specific instructions in the workflow YAML files or action files**. This is very specific to GitHub Actions pipelines and no existing system does this. Carlo: "I have no idea how to do this, but it would be very nice."
+
+### Rigel's Idea: Persistence Across Runs
+Attacks that persist state between different workflow runs:
+- Each push triggers a new workflow run; the attack progresses a little further each time
+- Must save state somehow to continue next run
+- **Problem**: GitHub-hosted runners are ephemeral (fresh VM each time), but cache mechanisms exist (specific actions for build artifact caching)
+- Self-hosted runners preserve the work folder across runs
+- Interesting but hard to replicate on their test environment
+
+### Venkat's Suggestion for Alternative Third Component
+Instead of forensics, consider broader areas:
+- Supporting essential GitHub functionality
+- How monitoring remains adaptive to diverse real-world workflows
+- False alarm reduction / system usability
+- Scenario graph as a minor result within detection, not a standalone section
+
+### Other CI/CD Platforms Mentioned
+Carlo noted: GitLab CI, Travis, Jenkins are alternatives. Future work could generalize to other platforms. Not for now.
+
+### Action Item
+Rafid will revise research questions (especially RQ2 bullets) and discuss with Carlo before next meeting. Venkat: "Whenever you're ready, we can discuss again."
+
+---
+
+## Rafid's Mindset Shift (2026-04-22, self-reflection with Claude)
+
+### The Problem Identified
+Rafid has been struggling with research questions not because of intelligence, but because of a specific skill gap: **distinguishing between "what the system does" and "what is genuinely novel research."** He kept describing existing techniques applied to CI/CD as research questions. Venkat kept rejecting them for the same reason.
+
+### Root Cause: Background Knowledge Gap
+Rafid admitted he spent 30 minutes on the first 3 sentences of the Sleuth abstract — every sentence assumes knowledge he doesn't have yet. Without understanding the related work deeply, he can't identify what's novel because he doesn't know what's already been done.
+
+### The AI Dependency Pattern
+Observed pattern across sessions:
+1. Rafid understands something technically
+2. Asks Claude to draft research questions / bullets / messages
+3. Goes into meeting unable to defend the reasoning because it's Claude's thinking, not his
+4. Venkat sees through it, pushes back
+5. Cycle repeats
+
+### Resolution: Use Claude as Tutor, Not Ghostwriter
+- For research thinking (RQs, novelty, framing) → Rafid must do the thinking first, Claude reviews
+- For background learning → Claude explains concepts Rafid is stuck on (tutor mode)
+- For infrastructure/code → Claude can just do it (nobody cares who wrote the YAML)
+- Study Plan (6 modules at Study-Plan.md) is critical — needs to start ASAP to close the knowledge gap
+
+### Key Insight
+This is a normal first-year PhD struggle. The skill of identifying novel research takes time to develop. Rafid is not behind — he's learning.
 
 ---
 
@@ -712,32 +800,46 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 ## Next Actions
 
 ### IMMEDIATE (next meeting) — Basecamp tasks
-- [x] **Refine research questions** — hierarchical with sub-questions showing novel work. Sent to Venkat for feedback. ✅
+- [ ] **Revise research questions** — RQ1 approved. RQ2 needs full rework with genuinely novel bullets. RQ3 may be dropped or replaced. Discuss with Carlo BEFORE bringing to Venkat.
 - [ ] **Evaluation overview** — RQ2 (detection table with real results) and RQ3 (forensics comparison) done. RQ1 (baseline policy) still TODO. Insert RQs into eval section in Overleaf.
 - [ ] **Sketch and approach for baseline policy generation, triaging and runtime check** — assigned to Carlo on Basecamp (figures + open research challenges for Sections 3.1, 3.2, 3.3)
+- [ ] **Start Study Plan** — Modules 1-3 (Linux processes, syscalls, networking) are critical for being able to read related papers independently
 
 ### Venkat's Feedback on RQs (2026-04-19)
 Venkat asked: under each RQ, list what NEW research (not in any prior publication) will be performed.
 He gave example for RQ1: (a) what is a baseline policy, (b) how to augment with project-specific policies, (c) how to represent for detection.
 
-### Research Questions with Sub-Questions (drafted 2026-04-19)
+### Research Questions with Sub-Questions
 
-**RQ1: How can we automatically derive a baseline policy from a benign workflow run?**
+**RQ1: How can we automatically derive a baseline policy from a benign workflow run?** ✅ Approved by Venkat
 - How can we define a baseline from a CI/CD provenance?
 - How to incorporate project-specific policies (developer intent) in the baseline?
 - How can these be summarized into a policy representation that can be used for detection later?
 
-**RQ2: What attacks can be detected by detecting deviations from a learned baseline, that existing static and network-based tools miss?**
-- How can we differentiate benign from malicious activity when they produce identical provenance patterns?
-- How can we detect attacks that use only trusted tools?
-- How do we detect file modifications done with malicious intent?
-- What types of attacks can only be solved using stateful (runtime) tracking of events?
+**RQ2: Detection** ❌ Sub-questions rejected by Venkat (9th meeting) — need full rework
 
-**RQ3: What does a complete attack reconstruction look like in a CI/CD pipeline?**
-- What information does an analyst need to fully understand a CI/CD attack?
-- How can we capture secrets that are passed in memory (e.g. environment variables)? (Rigel's synthetic node idea)
-- How to identify the minimal causal subgraph that explains why an alarm was flagged? (Carlo's counterfactual idea)
-- How to identify which specific action was the culprit? (Rigel's per-action graph coloring with def(i)/use(i))
+Old bullets (rejected — answers already known from prior work):
+- ~~How can we differentiate benign from malicious activity when they produce identical provenance patterns?~~ → Venkat: solved by tag propagation
+- ~~How can we detect attacks that use only trusted tools?~~ → too vague
+- ~~How do we detect file modifications done with malicious intent?~~ → too vague
+- ~~What types of attacks can only be solved using stateful (runtime) tracking of events?~~ → property, not research question
+
+Proposed new bullets (need discussion with Carlo, then Venkat):
+1. **How to correlate workflow-level steps (YAML) with system-level provenance for detection?** — No prior provenance system maps declarative pipeline definitions to runtime syscall events. CI/CD has two layers (YAML workflow → syscall execution) and nobody has built the bridge. Related to Carlo's 9th meeting idea (tracing to workflow instructions).
+2. **How to detect behavioral drift in trusted third-party actions after supply chain compromise?** — Traditional IDS monitors untrusted inputs. In CI/CD, the attacker IS a trusted action (codecov incident). Per-action behavioral profiles in the baseline, detecting when trusted action deviates. Novel because no prior work operates in a plugin/action ecosystem.
+3. **What classes of CI/CD attacks require detection rules beyond information flow tracking?** — Tag propagation catches exfil, but SolarWinds-style source modification doesn't violate information flow. What new rule categories beyond tagging are needed? Empirical work.
+
+**RQ3: Forensics** ⚠️ Venkat questioned whether substantive enough for a full section
+
+If kept, strongest novel bullet:
+- How to map forensic provenance output back to specific instructions in workflow/action YAML files? (Carlo's 9th meeting idea — no existing tool does this)
+
+Other options discussed:
+- Replace with broader usability/false-alarm-reduction component
+- Fold forensics into detection section as a minor result
+- Persistence across runs (Rigel's idea — interesting but hard to replicate)
+
+**Status**: Rafid sent first proposed bullet (workflow-level correlation) to Slack group on 2026-04-22. Will discuss with Carlo before sending more. Full rework needed before next meeting.
 
 ### Harden-Runner vs EAction Forensics Comparison (from documentation + real run)
 **Harden-Runner shows:** destination IP/domain, process name + PID, parent process (one level), HTTP method/path, which step. Does NOT show what data was sent. Requires manual cross-referencing across multiple tabs.
