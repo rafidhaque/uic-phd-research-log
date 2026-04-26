@@ -1,6 +1,18 @@
 # EAction — Research Project Plan
-> Last updated: 2026-04-22 (9th meeting processed, RQ sub-questions need rework per Venkat feedback, mindset shift documented)
+> Last updated: 2026-04-23 (meetings 9-12 + Carlo Meeting 3 processed)
 > To resume: tell Claude "read PLAN.md and continue the project"
+
+---
+
+## Daily Venkat Update Protocol
+
+Rafid sends a detailed Slack text to Venkat EVERY day with progress, thought process, and questions. This is important because:
+- Both Rafid and Venkat communicate better in text than speech (neither's first language is English)
+- Venkat is less frustrated in meetings when he's already seen progress via text
+- Writing forces Rafid to clarify his own thinking
+- Claude should always help prepare this daily message as part of each session's output
+
+**Format:** What I worked on today → What I figured out → What I'm stuck on → Plan for tomorrow
 
 ---
 
@@ -418,6 +430,130 @@ Rafid will revise research questions (especially RQ2 bullets) and discuss with C
 
 ---
 
+## Meeting 10 Outcomes (2026-04-23, in-person with Rigel + group)
+
+### Rafid Presented the Two-Layer Idea
+Rafid presented the core framing: prior provenance systems (Sleuth, Holmes) work at one layer (syscalls). EAction has two layers — the workflow YAML definition and the runtime syscall execution. The novelty is in bridging these layers.
+
+He presented three approaches to bridge them:
+1. **Timestamps** — use workflow log timestamps to partition provenance events. Dismissed: gaps in timestamps, impractical.
+2. **Modify the runner** — inject markers ("Step 3 starting") into the provenance stream. Problem: can't modify GitHub-hosted runners. Could work on self-hosted, but not the primary threat model.
+3. **Process tree** — watch fork/execve from the runner to infer step boundaries. Problem: Docker actions run in containers, sub-forks complicate it, optimistic to assume clean boundaries.
+
+Rafid concluded Option 2 (runner modification) is most viable if they assume GitHub would eventually implement it, and test on self-hosted runner in the meantime.
+
+### Rigel's Response: Two-Layer Mapping Is Trivial
+Rigel compared it to **Caldera** (MITRE adversary emulation framework). In Caldera, you have ground truth commands and map syscall events back to them. Same idea: if you have the YAML file defining what runs, the mapping is straightforward.
+
+**Key quote from Rigel**: "I'm not sure that they'll accept this as a difficult problem. As they might say, this is kind of trivial."
+
+He also pointed out: you have the action source code, you can just look up what each step runs. There's no hidden complexity.
+
+### Rigel Redirected Novelty
+Rigel said novelty should be in **"modeling or representing what is the benign behavior"** and then **detecting deviation from it**. Not in the two-layer mapping.
+
+### Carlo's Encoding/Embedding Idea
+Carlo proposed: find a way to encode/represent the provenance graph such that:
+- Minor variations between benign runs stay close (robust to noise)
+- Attacks produce a large distance from the benign encoding
+- Need an "embedding function that maximizes this difference"
+
+Carlo said: **"This will be a very big novelty if we can solve this problem."**
+
+This is a genuine graph comparison / representation learning research question. Could be a strong RQ2 sub-bullet — but it's the approach, not the question itself.
+
+### Impact on RQ Sub-Questions
+- The two-layer mapping bullet (proposed for RQ2.1) is dead — Rigel called it trivial
+- The YAML trace-back forensics bullet (proposed for RQ3.1) is the same problem, also dead
+- Novelty lives in baseline representation and deviation detection, not in mapping
+
+---
+
+## Meeting 11 Outcomes (2026-04-23, continuation of Meeting 10 discussion)
+
+### Venkat on Baseline Policy vs Graph Learning
+Venkat clarified: learning a baseline policy is **different** from learning the graph itself. The policy captures what behaviors are allowed — anything not present that looks like a violation gets flagged. Anything present in the baseline that would otherwise be a violation gets suppressed (whitelisted).
+
+He described a simple approach: "A very simple policy where the code in the codebase is allowed to access all the files and connections it accesses, and whitelisting them, is a coarse-based policy."
+
+### Venkat's Intuition: Simplest Approach Might Work
+Run benign workflow with existing detection rules → see what alarms fire → suppress those alarms as whitelisted → then run attacks and see if remaining alarms catch them.
+
+He said: "I didn't see any reason this was the hard bottleneck... the best way is to give us actual problems on the ground and then we can discuss."
+
+### Carlo's Concern
+Carlo raised that the simple suppression approach might not hold over time — different test runs might access different files, so the whitelist from one benign run may not cover all benign variations.
+
+### Key Takeaway
+Venkat wants to see concrete experimental results before overcomplicating the policy learning. Start simple, see where it breaks, then that tells you what the real research problems are.
+
+---
+
+## Carlo Meeting 3 Outcomes (2026-04-23, Rafid + Carlo in-person)
+
+### Tag Propagation = Behavioral Analysis
+Carlo confirmed: tag propagation and behavioral analysis are the same thing. Tags encode behavior. "If a process reads a secret file then writes to network — the tags capture that behavioral pattern." This means the RQ2 bullet "are there attacks beyond tag propagation?" is really asking "are there attacks beyond behavioral analysis?"
+
+### SolarWinds Detection: Implementation Gap, Not Logic Gap
+Carlo clarified: tag propagation DOES work for SolarWinds in theory. The untrusted tag from the third-party action should propagate through the file write (truncate). The miss was because eaudit doesn't capture the `truncate` syscall — an implementation gap, not a fundamental detection logic problem. Once truncate is captured, the taint chain is complete.
+
+### Forensics: Not Novel Enough for Its Own RQ
+Carlo's take: forensics (RQ3) is not substantively different from what existing provenance systems already do. Mapping provenance back to YAML is straightforward once you have the two-layer bridge. He agreed with Rigel that this isn't enough for a full research question.
+
+### Carlo's Encoding/Embedding Idea
+Carlo proposed: create a function that maps provenance graphs to numerical representations (embeddings) such that benign variations map to nearby points but attacks produce large distance. He called this "very big novelty" — learning a distance metric over provenance graphs for anomaly detection.
+
+### Simple Suppression Approach: Start Here
+Carlo agreed with Venkat: start with the simplest baseline policy approach first. Run general E* policies on benign graph → see what alarms fire → suppress those → that's your customized policy. Then run attacks against it. See what breaks, and THAT tells you what the real research problems are.
+
+### RQ1 Evaluation Table
+Carlo noted the baseline policy generation table (general policy alarms → customized alarms → attack alarms) makes more sense under RQ2 since the last columns measure detection effectiveness, not policy generation quality. Rafid will move it.
+
+---
+
+## Meeting 12 Outcomes (2026-04-23, group meeting with Venkat + Rigel)
+
+### Overall Tone
+Harsh. Venkat frustrated with pace of progress. Said the evaluation overview task should have taken "4-5 hours" and questioned why it's still incomplete. Pushed hard on reading papers and working more hours.
+
+### RQ2 Sub-Questions: Still Wrong
+Venkat's critique: the current RQ2 bullets are **solution-driven** not **problem-driven**. "Is tag propagation enough?" presupposes the approach. Instead: list the challenges that arise from the CI/CD security problem domain, then let the approach follow naturally.
+
+The right process: What are the problems? → What challenges do those create? → What approaches address those challenges? Current bullets skip straight to evaluating the approach.
+
+### Venkat's New RQ3 Idea: Contamination Analysis
+Venkat proposed a new direction for RQ3: **contamination analysis**. After detecting a suspicious action:
+1. Go back in time in the provenance graph
+2. Find everything the suspicious action touched
+3. Forward analysis to isolate all contaminated artifacts/files/outputs
+4. Provide a restore/checkpoint service — tell the developer exactly what was contaminated and how to recover
+
+This is different from simple forensics (which just replays what happened). It's about containment and recovery.
+
+### Rigel's Feature Extraction Approach for RQ1
+Rigel gave concrete guidance on how to build baseline policies:
+1. Observe benign provenance graph
+2. Extract features: what executables ran, what IPs were contacted, what actions were invoked, where actions came from
+3. Summarize into patterns/profiles
+4. Turn patterns into policy rules
+5. At runtime, detect deviations from these patterns
+
+He suggested looking at literature on **"provenance graphs and anomaly detection"** and specifically mentioned **Sekar's n-grams paper** as relevant.
+
+### Key Quotes
+- Venkat: "I don't want to get into a cycle where you bring things, I reject them, you go back..."
+- Venkat: "This is a PhD. You need to read papers. There is no shortcut."
+- Rigel on feature extraction: "What executables does it run? What IPs does it connect to? These are your features."
+
+### Action Items from Meeting 12
+- [ ] Rework RQ2 to be problem-driven (list CI/CD security challenges, not evaluate approach)
+- [ ] Develop RQ3 contamination analysis idea
+- [ ] Read "provenance graphs and anomaly detection" literature (Sekar's n-grams paper)
+- [ ] Complete evaluation overview properly
+- [ ] Read more papers — Venkat and Rigel both insisted
+
+---
+
 ## Rafid's Mindset Shift (2026-04-22, self-reflection with Claude)
 
 ### The Problem Identified
@@ -772,6 +908,63 @@ Initial tags sourced from: workflow YAML (third-party actions → Unknown, secre
 
 ---
 
+## Implementation Details: Detection Rules & Policies (discovered 2026-04-24)
+
+### Where the detection rules live
+- **`/Users/user/Desktop/nhost/Host/actions/workflowDetect.es`** — the ONLY custom `.es` detection module for GitHub Actions workflows
+- It includes: `propTags.h` (tag propagation logic) and `initTagsWF.h` (initial tag assignments)
+- **Updated by Carlo (confirmed 2026-04-25)** — now contains ALL detection modules, not just exfiltration
+
+### What `workflowDetect.es` contains (UPDATED 2026-04-25)
+ALL alarms are defined in this file. There are **5 detection modules** + **2 support modules**:
+
+**Detection modules (universal policy):**
+1. `detectExfiltration()` → `SensitiveExfiltration` alarm: process with SECRET tag writes to external network
+2. `detectLocalActionNetworkWrite()` → `LocalActionNetworkWrite` alarm: local action (GITHUB_ACTION=__self) writes to external public network. Covers LotL and SolarWinds-style network exfil
+3. `detectUnexpectedActionDownload()` → `UnexpectedActionDownload` alarm: local action writes untrusted file to /tmp/ after reading from network (unless allowlisted)
+4. `detectUnexpectedActionExecution()` → `UnexpectedActionExecution` alarm: local action reads/executes an untrusted /tmp/ file
+5. `detectUnexpectedWorkspaceWrite()` → `UnexpectedWorkspaceWrite` alarm: local action writes a .c source file in workspace (SolarWinds pattern). NOTE: does NOT fire on current attack trace because eaudit doesn't capture the O_TRUNC/printf redirect
+
+**Support modules:**
+6. `markLocalActionNetworkTaint()` — taints local-action subjects that read from external network as UNTRUSTED
+7. `initAllowedLocalActionDownloads()` — ALLOWLIST module: resets tags for approved download sources (currently: nvm install script from githubusercontent.com). Must come after propTags.
+
+**Initialization modules:**
+- `initWorkflowSpecific()` — tags objects containing "dummytoken123" as SECRET
+- `initRuntimeTokenObjects()` — same for runtime-created objects
+- `initRunnerTokenSubjects()` — tags runner subjects with "dummytoken123" in cmdline as SECRET
+
+### Key insight: the allowlist IS the specialized policy
+The `initAllowedLocalActionDownloads()` module is the prototype of what a specialized policy looks like. It has a hardcoded allowlist entry for the nvm install script URL. In practice, generating a specialized policy means adding entries to this allowlist based on benign run observations. Currently this is manual (Carlo added the nvm entry by hand after seeing the benign-malware FP). The research question is how to automate this.
+
+### What this means for "universal" vs "specialized" policy
+- **Universal policy** = all 5 detection modules with NO allowlist entries. These fire on ANY workflow.
+- **Specialized policy** = universal policy + allowlist entries derived from benign runs. The `initAllowedLocalActionDownloads` module is where suppressions go.
+- The specialization is NOT just "suppress alarm X globally" — it's "suppress alarm X for THIS specific source/context" (e.g., allow downloads from nvm's URL but not from attacker.com)
+
+### What does NOT exist yet
+- No automated allowlist generation (currently Carlo manually adds entries after observing benign FPs)
+- No policy representation format (allowlist is hardcoded in .es source, not a config file)
+- SolarWinds detection rule exists but doesn't fire because eaudit misses the O_TRUNC syscall
+
+### Tag initialization (`initTagsWF.h`)
+- Default objects: BENIGN_AUTHENTIC + PUBLIC
+- Local objects (`LOCAL:*`): BENIGN + PRIVATE
+- IP objects (`IP:*`): UNTRUSTED + SENSITIVE
+- Cert objects (`CERT:*`): BENIGN + PUBLIC
+- `/bin/login`: INVULNERABLE + PUBLIC
+- Default subjects: INVULNERABLE + BENIGN_AUTHENTIC + PUBLIC
+
+### Tag propagation (`propTags.h`)
+Conservative propagation: output inherits lowest integrity and highest confidentiality of all inputs. Key rules:
+- `read`: subject inherits min integrity, min confidentiality from object read
+- `load`/`execve`: subject inherits code integrity tag from loaded object
+- `write`: object inherits min of subject and existing object tags
+- `create`: new object gets subject's integrity tag + PUBLIC confidentiality
+- `setuid`: if non-root, downgrade code integrity from INVULNERABLE to BENIGN_AUTHENTIC
+
+---
+
 ## Demo Workflows (Carlo's repo: cfvescovo/eactions)
 
 ### Benign Workflows ✅ (all pushed)
@@ -799,11 +992,13 @@ Benign and malicious exfiltration are **behaviorally identical** in the provenan
 
 ## Next Actions
 
-### IMMEDIATE (next meeting) — Basecamp tasks
-- [ ] **Revise research questions** — RQ1 approved. RQ2 needs full rework with genuinely novel bullets. RQ3 may be dropped or replaced. Discuss with Carlo BEFORE bringing to Venkat.
-- [ ] **Evaluation overview** — RQ2 (detection table with real results) and RQ3 (forensics comparison) done. RQ1 (baseline policy) still TODO. Insert RQs into eval section in Overleaf.
+### IMMEDIATE (next meeting)
+- [ ] **Rework RQ2 sub-questions** — Must be problem-driven not solution-driven. List CI/CD security challenges from the problem domain, not "is our approach enough?" (Meeting 12 feedback)
+- [ ] **Develop RQ3: Contamination Analysis** — Venkat's new idea: detect → trace back → forward analysis → isolate contaminated artifacts → restore/checkpoint. Flesh this out.
+- [ ] **Complete evaluation overview** — RQ1 needs Rigel's feature extraction approach (executables, IPs, action origins → patterns → rules). Move RQ1 table to RQ2 per Carlo.
+- [ ] **Read papers** — "provenance graphs and anomaly detection" literature, Sekar's n-grams paper (Rigel's suggestion). Non-negotiable per Venkat.
 - [ ] **Sketch and approach for baseline policy generation, triaging and runtime check** — assigned to Carlo on Basecamp (figures + open research challenges for Sections 3.1, 3.2, 3.3)
-- [ ] **Start Study Plan** — Modules 1-3 (Linux processes, syscalls, networking) are critical for being able to read related papers independently
+- [ ] **Start Study Plan** — Modules 1-3 (Linux processes, syscalls, networking) critical for reading papers independently
 
 ### Venkat's Feedback on RQs (2026-04-19)
 Venkat asked: under each RQ, list what NEW research (not in any prior publication) will be performed.
@@ -812,34 +1007,36 @@ He gave example for RQ1: (a) what is a baseline policy, (b) how to augment with 
 ### Research Questions with Sub-Questions
 
 **RQ1: How can we automatically derive a baseline policy from a benign workflow run?** ✅ Approved by Venkat
-- How can we define a baseline from a CI/CD provenance?
-- How to incorporate project-specific policies (developer intent) in the baseline?
+- How can we define a baseline policy from a CI/CD Provenance?
+- How to incorporate project-specific policies (eg. unique behaviors, developer intent) in the baseline?
 - How can these be summarized into a policy representation that can be used for detection later?
+- How granular should the baseline policy be? (Too granular means high false positive, too coarse means missing attacks) ← new, not yet reviewed by Venkat
 
-**RQ2: Detection** ❌ Sub-questions rejected by Venkat (9th meeting) — need full rework
+**RQ2: What attacks can be detected by detecting deviations from a learned baseline, that existing static and network-based tools miss?** ❌ Sub-questions need full rework
 
-Old bullets (rejected — answers already known from prior work):
+Round 1 bullets (rejected by Venkat, 9th meeting — answers already known from prior work):
 - ~~How can we differentiate benign from malicious activity when they produce identical provenance patterns?~~ → Venkat: solved by tag propagation
 - ~~How can we detect attacks that use only trusted tools?~~ → too vague
 - ~~How do we detect file modifications done with malicious intent?~~ → too vague
 - ~~What types of attacks can only be solved using stateful (runtime) tracking of events?~~ → property, not research question
 
-Proposed new bullets (need discussion with Carlo, then Venkat):
-1. **How to correlate workflow-level steps (YAML) with system-level provenance for detection?** — No prior provenance system maps declarative pipeline definitions to runtime syscall events. CI/CD has two layers (YAML workflow → syscall execution) and nobody has built the bridge. Related to Carlo's 9th meeting idea (tracing to workflow instructions).
-2. **How to detect behavioral drift in trusted third-party actions after supply chain compromise?** — Traditional IDS monitors untrusted inputs. In CI/CD, the attacker IS a trusted action (codecov incident). Per-action behavioral profiles in the baseline, detecting when trusted action deviates. Novel because no prior work operates in a plugin/action ecosystem.
-3. **What classes of CI/CD attacks require detection rules beyond information flow tracking?** — Tag propagation catches exfil, but SolarWinds-style source modification doesn't violate information flow. What new rule categories beyond tagging are needed? Empirical work.
+Round 2 bullets (current state, discussing with Carlo):
+1. ~~**How to correlate workflow-level steps (YAML) with system-level provenance for detection?**~~ → Rigel called this trivial in Meeting 10 (Caldera comparison). Marked for re-discussion with Carlo.
+2. **How to detect behavioral change/deviation in trusted third-party actions after supply chain compromise?** — Not yet reviewed by anyone. The attacker IS a trusted action (codecov incident). Per-action behavioral profiles in the baseline, detecting when trusted action deviates.
+3. **Are there attacks where tag propagation alone isn't enough?** — Experimentally confirmed: SolarWinds missed because file modification doesn't violate information flow. What new rule categories beyond tagging are needed?
 
-**RQ3: Forensics** ⚠️ Venkat questioned whether substantive enough for a full section
+**RQ3: What does a complete attack reconstruction look like in a CI/CD pipeline?** ⚠️ Venkat questioned whether substantive enough for a full section
 
-If kept, strongest novel bullet:
-- How to map forensic provenance output back to specific instructions in workflow/action YAML files? (Carlo's 9th meeting idea — no existing tool does this)
+Current bullet (marked for re-discussion with Carlo):
+- ~~How can we map forensic provenance output back to specific instructions in workflow/action YAML files?~~ → Same problem as RQ2.1 (two-layer mapping). Rigel's "trivial" critique applies here too.
 
-Other options discussed:
-- Replace with broader usability/false-alarm-reduction component
-- Fold forensics into detection section as a minor result
-- Persistence across runs (Rigel's idea — interesting but hard to replicate)
+Open questions about RQ3:
+- Is forensics substantive enough for its own section?
+- Could fold into detection as a minor result
+- Persistence across runs (Rigel's idea from Meeting 9 — interesting but hard to replicate)
+- Need Carlo's input on whether he has enough novel forensics work
 
-**Status**: Rafid sent first proposed bullet (workflow-level correlation) to Slack group on 2026-04-22. Will discuss with Carlo before sending more. Full rework needed before next meeting.
+**Status (2026-04-23)**: Carlo discussion done (see Carlo Meeting 3 Outcomes). Meeting 12 happened — Venkat says RQ2 bullets are still solution-driven, need problem-driven rework. New RQ3 direction: contamination analysis. Rigel gave concrete RQ1 feature extraction approach. Need to rework RQ2 before next meeting.
 
 ### Harden-Runner vs EAction Forensics Comparison (from documentation + real run)
 **Harden-Runner shows:** destination IP/domain, process name + PID, parent process (one level), HTTP method/path, which step. Does NOT show what data was sent. Requires manual cross-referencing across multiple tabs.

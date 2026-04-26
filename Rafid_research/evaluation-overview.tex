@@ -1,0 +1,72 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+\newcommand{\cmark}{\textcolor{green!70!black}{\ding{51}}}
+\newcommand{\xmark}{\textcolor{red!80!black}{\ding{55}}}
+\newcommand{\pmark}{\textcolor{orange!80!black}{\ding{51}}}
+
+\title{EAction: Evaluation Overview}
+\date{\today}
+
+\begin{document}
+
+
+\section*{RQ1: Baseline Policy Generation}
+
+
+
+
+\section*{RQ2: Attack Detection}
+
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\caption{Baseline Policy Generation}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Workflow} & \textbf{Alarms on Benign (General Policy)} & \textbf{Alarms on Benign (Customized)} & \textbf{Alarms on Attack (Customized)} & \textbf{Attack Caught?} \\
+\midrule
+Exfil & ? & ? & ? & ? \\
+Malware & ? & ? & ? & ? \\
+LotL & ? & ? & ? & ? \\
+SolarWinds & ? & ? & ? & ? \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+
+
+
+
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\caption{Tool Comparison: Attack Detection Coverage}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Attack} & \textbf{GWChecker} & \textbf{GHAST} & \textbf{ARGUS} & \textbf{Sher} & \textbf{Granite} & \textbf{Harden-Runner} & \textbf{EAction} \\
+\midrule
+Secret Exfiltration            & \xmark & \xmark & \xmark & \xmark & \xmark & \pmark & \cmark \\
+Malware Download \& Execution  & \xmark & \xmark & \xmark & \xmark & \xmark & \cmark & \cmark \\
+Build Artifact Poisoning       & \xmark & \xmark & \xmark & \xmark & \xmark & \cmark & \xmark* \\
+Living off the Land            & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark & \cmark \\
+\bottomrule
+\end{tabular}
+}
+\smallskip
+\end{table}
+
+
+
+
+\section*{RQ3: Forensics}
+
+
+\end{document}
